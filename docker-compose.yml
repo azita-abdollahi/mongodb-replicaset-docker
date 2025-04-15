@@ -131,7 +131,7 @@ services:
       connet:
         ipv4_address: 192.168.22.15
     ports:
-      - 8086:8081
+      - 8081:8081
     restart: unless-stopped
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongodb1, mongodb2, mongodb3
