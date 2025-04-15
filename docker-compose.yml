@@ -1,0 +1,154 @@
+services:
+  mongodb1:
+    image: mongo:8.0.6
+    container_name: mongodb1
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+      - MONGO_INITDB_DATABASE=${MONGO_DB}
+      - MONGO_REPLICA_SET_NAME=rs0
+    restart: unless-stopped
+    networks:
+      connet:
+        ipv4_address: 192.168.22.11
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo-data1:/data/db
+      - ./replica.key:/data/replica.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /data/replica.key
+        chown 999:999 /data/replica.key
+        exec docker-entrypoint.sh $$@
+    command: mongod --bind_ip_all --replSet rs0 --keyFile /data/replica.key 
+    healthcheck:
+      test: >
+        mongosh --host localhost --quiet --eval 
+        "try { rs.status().ok } catch (e) { 0 }"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  mongodb2:
+    image: mongo:8.0.6
+    container_name: mongodb2
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+      - MONGO_INITDB_DATABASE=${MONGO_DB}
+      - MONGO_REPLICA_SET_NAME=rs0
+    restart: unless-stopped
+    networks:
+      connet:
+        ipv4_address: 192.168.22.12
+    ports:
+      - 27018:27017
+    volumes:
+      - mongo-data2:/data/db
+      - ./replica.key:/data/replica.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /data/replica.key
+        chown 999:999 /data/replica.key
+        exec docker-entrypoint.sh $$@
+    command: mongod --bind_ip_all --replSet rs0 --keyFile /data/replica.key 
+    healthcheck:
+      test: >
+        mongosh --host localhost --quiet --eval 
+        "try { rs.status().ok } catch (e) { 0 }"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  
+  mongodb3:
+    image: mongo:8.0.6
+    container_name: mongodb3
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+      - MONGO_INITDB_DATABASE=${MONGO_DB}
+      - MONGO_REPLICA_SET_NAME=rs0
+    restart: unless-stopped
+    networks:
+      connet:
+        ipv4_address: 192.168.22.13
+    ports:
+      - 27019:27017
+    volumes:
+      - mongo-data3:/data/db
+      - ./replica.key:/data/replica.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /data/replica.key
+        chown 999:999 /data/replica.key
+        exec docker-entrypoint.sh $$@
+    command: mongod --bind_ip_all --replSet rs0 --keyFile /data/replica.key 
+    healthcheck:
+      test: >
+        mongosh --host localhost --quiet --eval 
+        "try { rs.status().ok } catch (e) { 0 }"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  
+  mongo-init:
+    image: mongo:8.0.6
+    container_name: mongo-init
+    depends_on:
+      mongodb1:
+        condition: service_healthy
+      mongodb2:
+        condition: service_healthy
+      mongodb3:
+        condition: service_healthy
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+    volumes:
+      - ./mongo_rs_init.sh:/scripts/mongo_rs_init.sh
+      - ./replica.key:/data/replica.key
+    restart: no
+    entrypoint: ["/bin/bash", "/scripts/mongo_rs_init.sh"]
+    networks:
+      connet:
+        ipv4_address: 192.168.22.14
+
+  mongo-express:
+    image: mongo-express:1.0.2-18
+    container_name: mongo-express1
+    depends_on:
+      - mongodb1
+      - mongodb2
+      - mongodb3
+    networks:
+      connet:
+        ipv4_address: 192.168.22.15
+    ports:
+      - 8086:8081
+    restart: unless-stopped
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb1, mongodb2, mongodb3
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASS}@mongodb1:27017, mongodb2:27017, mongodb3:27017/?replicaSet=rs0
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASS}
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXP_USER}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXP_PASS}
+
+networks:
+  connet:
+    external: true
+volumes:
+  mongo-data1:
+    driver: local
+  mongo-data2:
+    driver: local
+  mongo-data3:
+    driver: local
