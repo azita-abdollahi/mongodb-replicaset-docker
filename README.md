@@ -60,8 +60,8 @@ Mongo Express will be available at http://localhost:8081
 | Service       | Role        | Port  |
 | ------------- | ----------- | ----- |
 | mongodb1      | Primary     | 27017 |
-| mongodb2      | Secondary   | 27018 |
-| mongodb3      | Secondary   | 27019 |
+| mongodb2      | Secondary   | 27017 |
+| mongodb3      | Secondary   | 27017 |
 | mongo-express | Web UI      | 8081  |
 | mongo-init    | Init script | —     |
 

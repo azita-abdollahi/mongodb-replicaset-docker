@@ -11,8 +11,6 @@ services:
     networks:
       connet:
         ipv4_address: 192.168.22.11
-    ports:
-      - 27017:27017
     volumes:
       - mongo-data1:/data/db
       - ./replica.key:/data/replica.key
@@ -44,8 +42,6 @@ services:
     networks:
       connet:
         ipv4_address: 192.168.22.12
-    ports:
-      - 27018:27017
     volumes:
       - mongo-data2:/data/db
       - ./replica.key:/data/replica.key
@@ -77,8 +73,6 @@ services:
     networks:
       connet:
         ipv4_address: 192.168.22.13
-    ports:
-      - 27019:27017
     volumes:
       - mongo-data3:/data/db
       - ./replica.key:/data/replica.key
